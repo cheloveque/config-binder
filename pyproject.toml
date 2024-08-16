@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "config-binder"
+version = "0.1.0"
+description = "Binding Python various formats configurations to classes with type validation, environment variables, and nested classes."
+authors = ["Pavel Istomin <inspaulation@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+pyyaml = "^6.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
