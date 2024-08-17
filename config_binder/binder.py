@@ -49,17 +49,20 @@ class ConfigBinder:
     def read(cls, config_type: ConfigType, data, class_to_bind: Type[T] = None) -> Dict | T:
         if not data:
             raise ValueError(f'{ERROR_MSG}, data is empty')
+
         try:
             match config_type:
                 case ConfigType.yaml:
-                    loaded = cls.__read_yaml(data)
+                    parsed = cls.__parse_yaml(data)
                 case _:
                     raise ValueError(f"Unsupported ConfigType: {config_type}")
-            if not class_to_bind:
-                return loaded
-            return cls.bind(loaded, class_to_bind)
         except Exception as ex:
             raise ValueError(f'{ERROR_MSG}, parsing error occurred: {str(ex)}')
+
+        if not class_to_bind:
+            return parsed
+
+        return cls.bind(parsed, class_to_bind)
 
     @classmethod
     def bind(cls, data: Any, clazz: Type[T]) -> T:
@@ -69,7 +72,7 @@ class ConfigBinder:
             return cls.__bind_class(data, clazz)
 
     @classmethod
-    def __read_yaml(cls, data: str) -> dict:
+    def __parse_yaml(cls, data: str) -> dict:
         loader = cls.__create_loader()
         return yaml.load(data, Loader=loader)
 
@@ -97,23 +100,25 @@ class ConfigBinder:
         kw_fields = {}
 
         for field_name, field_type in type_hints.items():
-            field_data = data.get(field_name)
-
-            if cls.__if_custom_class(field_type):
-                kw_fields[field_name] = cls.__bind_class(field_data, field_type)
-            elif cls.__if_collection(field_type):
-                if field_type.__origin__ in [list, set]:
-                    kw_fields[field_name] = cls.__bind_set_list(field_data, field_type)
-                elif field_type.__origin__ is tuple:
-                    kw_fields[field_name] = cls.__bind_tuple(field_data, field_type)
-                elif field_type.__origin__ is dict:
-                    kw_fields[field_name] = cls.__bind_dict(field_data, field_type)
-            elif cls.__if_literal(field_type):
-                kw_fields[field_name] = cls.__bind_literal(field_data, field_type)
-            elif cls.__if_union(field_type):
-                kw_fields[field_name] = cls.__bind_union(field_data, field_type)
-            else:
-                kw_fields[field_name] = cls.__bind_simple_type(field_data, field_type)
+            try:
+                field_data = data.get(field_name)
+                if cls.__if_custom_class(field_type):
+                    kw_fields[field_name] = cls.__bind_class(field_data, field_type)
+                elif cls.__if_collection(field_type):
+                    if field_type.__origin__ in [list, set]:
+                        kw_fields[field_name] = cls.__bind_set_list(field_data, field_type)
+                    elif field_type.__origin__ is tuple:
+                        kw_fields[field_name] = cls.__bind_tuple(field_data, field_type)
+                    elif field_type.__origin__ is dict:
+                        kw_fields[field_name] = cls.__bind_dict(field_data, field_type)
+                elif cls.__if_literal(field_type):
+                    kw_fields[field_name] = cls.__bind_literal(field_data, field_type)
+                elif cls.__if_union(field_type):
+                    kw_fields[field_name] = cls.__bind_union(field_data, field_type)
+                else:
+                    kw_fields[field_name] = cls.__bind_simple_type(field_data, field_type)
+            except Exception as ex:
+                raise ValidationError(f"Failed to bind \'{field_name}\' field: {ex.__str__()}")
 
         try:
             bind = clazz(**kw_fields)
@@ -174,7 +179,7 @@ class ConfigBinder:
         field_types = field_type.__args__
         for field_type in [ft for ft in field_types if ft not in primitive_types]:
             try:
-                return cls.__bind_class(field_type, field_data)
+                return cls.__bind_class(field_data, field_type)
             except Exception:
                 pass
 

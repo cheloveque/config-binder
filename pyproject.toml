@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "config-binder"
-version = "0.1.0"
+version = "0.1.2"
 description = "Binding Python various formats configurations to classes with type validation, environment variables, and nested classes."
 authors = ["Pavel Istomin <inspaulation@gmail.com>"]
 license = "MIT"
