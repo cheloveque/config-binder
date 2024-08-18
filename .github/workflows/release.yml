@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'pyproject.toml'
+
+permissions:
+  contents: read
+
+jobs:
+  check_if_version_changed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+      - name: Compare versions
+        run: |
+          old_version=$(git show HEAD^:pyproject.toml | grep '^version =' | cut -d '"' -f 2)
+          echo "old_version: $old_version"
+          new_version=$(grep '^version =' pyproject.toml | cut -d '"' -f 2)
+          echo "new_version: $new_version"
+          if [ "$old_version" != "$new_version" ]; then
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+  release:
+    needs: check_if_version_changed
+    if: ${{ needs.check_if_version_changed.outputs.version_changed }} == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "${HOME}/.poetry/bin" >> $GITHUB_PATH
+        poetry install
+    - name: Run tests
+      run: poetry run pytest
+    - run: poetry config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
+    - name: Build and publish package
+      run: poetry publish --build
+    - name: Create tag
+      run: |
+        git tag $(poetry version -s)
+        git push --tags
