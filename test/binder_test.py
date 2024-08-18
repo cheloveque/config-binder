@@ -41,23 +41,53 @@ def test_load_yaml():
     field5: some string
     """
 
-    loaded_config = ConfigBinder.read(ConfigType.yaml, yaml_content, MainConfig)
+    json_content = """
+    {
+    "field1": "example string",
+    "field2": 45.67,
+    "field3":
+    {
+        "key1":
+        {
+            "nested_field1": 123,
+            "nested_field2": "True"
+        },
+        "key2":
+        {
+            "nested_field1": 456,
+            "nested_field2": "False"
+        }
+    },
+    "field4":
+    [
+        1,
+        2,
+        3,
+        4,
+        5
+    ],
+    "field5": "some string"
+    }"""
 
-    assert isinstance(loaded_config, MainConfig)
-    assert loaded_config.field1 == "example string"
-    assert isinstance(loaded_config.field2, float)
-    assert loaded_config.field2 == 45.67
-    assert isinstance(loaded_config.field3, dict)
-    assert 'key1' in loaded_config.field3 and isinstance(loaded_config.field3['key1'], NestedConfig)
-    assert loaded_config.field3['key1'].nested_field1 == 123
-    assert loaded_config.field3['key1'].nested_field2 is True
-    assert 'key2' in loaded_config.field3 and isinstance(loaded_config.field3['key2'], NestedConfig)
-    assert loaded_config.field3['key2'].nested_field1 == 456
-    assert loaded_config.field3['key2'].nested_field2 is False
-    assert isinstance(loaded_config.field4, list)
-    assert loaded_config.field4 == [1, 2, 3, 4, 5]
-    assert isinstance(loaded_config.field5, str)
-    assert loaded_config.field5 == "some string"
+    yaml_config = ConfigBinder.read(ConfigType.yaml, yaml_content, MainConfig)
+    json_config = ConfigBinder.read(ConfigType.json, json_content, MainConfig)
+
+    for config in [yaml_config, json_config]:
+        assert isinstance(config, MainConfig)
+        assert config.field1 == "example string"
+        assert isinstance(config.field2, float)
+        assert config.field2 == 45.67
+        assert isinstance(config.field3, dict)
+        assert 'key1' in config.field3 and isinstance(config.field3['key1'], NestedConfig)
+        assert config.field3['key1'].nested_field1 == 123
+        assert config.field3['key1'].nested_field2 is True
+        assert 'key2' in config.field3 and isinstance(config.field3['key2'], NestedConfig)
+        assert config.field3['key2'].nested_field1 == 456
+        assert config.field3['key2'].nested_field2 is False
+        assert isinstance(config.field4, list)
+        assert config.field4 == [1, 2, 3, 4, 5]
+        assert isinstance(config.field5, str)
+        assert config.field5 == "some string"
 
 
 def test_bind_set_list():

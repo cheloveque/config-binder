@@ -7,6 +7,7 @@ from types import NoneType
 from typing import Type, get_type_hints, Dict, Any, TypeVar, Literal, Union, Tuple, List, Set, Self
 
 import yaml
+import json
 from yaml import SafeLoader, ScalarNode
 
 ENV_VARIABLE_REGEX = re.compile(r'.*?\$\{([^{:}]+)(:?)([^}]+)?}.*?')
@@ -23,7 +24,7 @@ class ValidationError(Exception):
 
 class ConfigType(Enum):
     yaml = ['.yaml', '.yml']
-    json = ['json']
+    json = ['.json']
 
     @classmethod
     def of_extension(cls, extension: str) -> Self:
@@ -54,6 +55,8 @@ class ConfigBinder:
             match config_type:
                 case ConfigType.yaml:
                     parsed = cls.__parse_yaml(data)
+                case ConfigType.json:
+                    parsed = cls.__parse_json(data)
                 case _:
                     raise ValueError(f"Unsupported ConfigType: {config_type}")
         except Exception as ex:
@@ -75,6 +78,10 @@ class ConfigBinder:
     def __parse_yaml(cls, data: str) -> dict:
         loader = cls.__create_loader()
         return yaml.load(data, Loader=loader)
+
+    @classmethod
+    def __parse_json(cls, data: str) -> dict:
+        return json.loads(data)
 
     @classmethod
     def __create_loader(cls) -> Type[SafeLoader]:

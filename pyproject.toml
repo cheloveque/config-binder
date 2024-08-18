@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "config-binder"
-version = "0.1.2"
-description = "Binding Python various formats configurations to classes with type validation, environment variables, and nested classes."
+version = "0.2.0"
+description = "Easily parse configurations across various formats (YAML, JSON, etc.) with recursive class binding, environment variables resolution and type safety."
 authors = ["Pavel Istomin <inspaulation@gmail.com>"]
 license = "MIT"
 readme = "README.md"
