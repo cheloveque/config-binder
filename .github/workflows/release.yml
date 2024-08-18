@@ -24,9 +24,9 @@ jobs:
       - name: Compare versions
         run: |
           old_version=$(git show HEAD^:pyproject.toml | grep '^version =' | cut -d '"' -f 2)
-          echo "old_version: $old_version"
           new_version=$(grep '^version =' pyproject.toml | cut -d '"' -f 2)
-          echo "new_version: $new_version"
+          echo "old_version: $old_version -> new_version: $new_version"
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
           if [ "$old_version" != "$new_version" ]; then
             echo "version_changed=true" >> $GITHUB_OUTPUT
           else
@@ -50,9 +50,18 @@ jobs:
     - name: Run tests
       run: poetry run pytest
     - run: poetry config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
+    - name: Push tag
+      id: tag_version
+      uses: mathieudutour/github-tag-action@v6.2
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        custom_tag: ${{ needs.check_if_version_changed.outputs.new_version }}
+    - name: Create a GitHub release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ steps.tag_version.outputs.new_tag }}
+        name: Release ${{ steps.tag_version.outputs.new_tag }}
+        body: ${{ steps.tag_version.outputs.changelog }}
     - name: Build and publish package
       run: poetry publish --build
-    - name: Create tag
-      run: |
-        git tag $(poetry version -s)
-        git push --tags
+
