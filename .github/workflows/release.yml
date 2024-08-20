@@ -8,7 +8,7 @@ on:
       - 'pyproject.toml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   check_if_version_changed:

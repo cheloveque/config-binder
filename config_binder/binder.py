@@ -44,7 +44,7 @@ class ConfigBinder:
             raise ValueError(f'{ERROR_MSG}, path is not specified')
         path = Path(path)
         with open(path, encoding=FILE_ENCODING) as data:
-            return cls.read(ConfigType.of_extension(path.suffix), data, class_to_bind)
+            return cls.read(ConfigType.of_extension(path.suffix), data.read(), class_to_bind)
 
     @classmethod
     def read(cls, config_type: ConfigType, data, class_to_bind: Type[T] = None) -> Dict | T:

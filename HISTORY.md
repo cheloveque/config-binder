@@ -1,3 +1,6 @@
+## [0.2.1] (2024-08-20)
+- json parsing issue fixed
+
 ## [0.2.0] (2024-08-17)
 - json support added
 
