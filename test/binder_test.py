@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from typing import Union, Optional, Literal, Tuple, List, Set, Dict
 
@@ -10,7 +11,7 @@ def data_template(val):
     return {'field': val}
 
 
-def test_load_yaml():
+def test_load_all_types():
     class NestedConfig:
         nested_field1: int
         nested_field2: bool
@@ -21,58 +22,16 @@ def test_load_yaml():
         field3: Dict[str, NestedConfig]
         field4: List[int]
         field5: Union[str, int]
+        field6: Optional[int]
+        field7: Optional[int]
+        field8: Optional[int]
+        field9: str
+        field10: str
 
-    yaml_content = """
-    field1: example string
-    field2: 45.67
-    field3:
-        key1:
-            nested_field1: 123
-            nested_field2: true
-        key2:
-            nested_field1: 456
-            nested_field2: false
-    field4:
-        - 1
-        - 2
-        - 3
-        - 4
-        - 5
-    field5: some string
-    """
+    os.environ["EXISTENT_ENV"] = "456"
 
-    json_content = """
-    {
-    "field1": "example string",
-    "field2": 45.67,
-    "field3":
-    {
-        "key1":
-        {
-            "nested_field1": 123,
-            "nested_field2": "True"
-        },
-        "key2":
-        {
-            "nested_field1": 456,
-            "nested_field2": "False"
-        }
-    },
-    "field4":
-    [
-        1,
-        2,
-        3,
-        4,
-        5
-    ],
-    "field5": "some string"
-    }"""
-
-    yaml_config = ConfigBinder.read(ConfigType.yaml, yaml_content, MainConfig)
-    json_config = ConfigBinder.read(ConfigType.json, json_content, MainConfig)
-
-    for config in [yaml_config, json_config]:
+    for config_type in ConfigType:
+        config = ConfigBinder.load(f"data/test/test{config_type.value[0]}", MainConfig)
         assert isinstance(config, MainConfig)
         assert config.field1 == "example string"
         assert isinstance(config.field2, float)
@@ -88,6 +47,75 @@ def test_load_yaml():
         assert config.field4 == [1, 2, 3, 4, 5]
         assert isinstance(config.field5, str)
         assert config.field5 == "some string"
+        assert config.field6 is None
+        assert config.field7 is None
+        assert config.field8 is None
+        assert config.field9 == 'None'
+        assert config.field10 == 'None'
+
+
+def test_read():
+    class NestedConfig:
+        nested_field1: int
+        nested_field2: bool
+
+    class MainConfig:
+        field1: str
+        field2: float
+        field3: Dict[str, NestedConfig]
+        field4: List[int]
+        field5: Union[str, int]
+        field6: Optional[int]
+        field7: Optional[int]
+        field8: Optional[int]
+        field9: str
+        field10: str
+
+    data = """
+    field1: example string
+    field2: 45.67
+    field3:
+      key1:
+        nested_field1: 123
+        nested_field2: true
+      key2:
+        nested_field1: ${EXISTENT_ENV}
+        nested_field2: false
+    field4:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+    field5: some string
+    field7: ${NONEXISTENT_ENV}
+    field8: ${NONEXISTENT_ENV:}
+    field10: ${NONEXISTENT_ENV}
+    """
+
+    os.environ["EXISTENT_ENV"] = "456"
+
+    config = ConfigBinder.read(ConfigType.yaml, data, MainConfig)
+    assert isinstance(config, MainConfig)
+    assert config.field1 == "example string"
+    assert isinstance(config.field2, float)
+    assert config.field2 == 45.67
+    assert isinstance(config.field3, dict)
+    assert 'key1' in config.field3 and isinstance(config.field3['key1'], NestedConfig)
+    assert config.field3['key1'].nested_field1 == 123
+    assert config.field3['key1'].nested_field2 is True
+    assert 'key2' in config.field3 and isinstance(config.field3['key2'], NestedConfig)
+    assert config.field3['key2'].nested_field1 == 456
+    assert config.field3['key2'].nested_field2 is False
+    assert isinstance(config.field4, list)
+    assert config.field4 == [1, 2, 3, 4, 5]
+    assert isinstance(config.field5, str)
+    assert config.field5 == "some string"
+    assert config.field6 is None
+    assert config.field7 is None
+    assert config.field8 is None
+    assert config.field9 == 'None'
+    assert config.field10 == 'None'
 
 
 def test_bind_set_list():
@@ -265,6 +293,8 @@ def test_bind_union():
     test_config = ConfigBinder.bind(data_template('None'), TestConfigUnion)
     assert test_config.field is None
     test_config = ConfigBinder.bind(data_template(None), TestConfigUnion)
+    assert test_config.field is None
+    test_config = ConfigBinder.bind({}, TestConfigUnion)
     assert test_config.field is None
 
     with pytest.raises(ValidationError):

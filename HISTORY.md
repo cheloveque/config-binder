@@ -1,4 +1,8 @@
-## [0.2.2] (2024-08-20)
+## [0.2.3] (2024-08-28)
+- improved usability of None properties
+- added json environment variables parsing
+
+## [0.2.2] (2024-08-28)
 - removed Self typing due to compatibility issues
 
 ## [0.2.1] (2024-08-20)
@@ -19,4 +23,3 @@
 - environment variables resolving
 - data types validation
 - auto binding
-

@@ -81,7 +81,7 @@ class ConfigBinder:
 
     @classmethod
     def __parse_json(cls, data: str) -> dict:
-        return json.loads(data)
+        return json.loads(cls._resolve_envs(data))
 
     @classmethod
     def __create_loader(cls) -> Type[SafeLoader]:
@@ -93,12 +93,13 @@ class ConfigBinder:
 
     @classmethod
     def __constructor(cls, loader: SafeLoader, node: ScalarNode):
-        to_resolve = loader.construct_scalar(node)
+        return cls._resolve_envs(loader.construct_scalar(node))
+
+    @staticmethod
+    def _resolve_envs(to_resolve: str):
         for variable, separator, default_value in ENV_VARIABLE_REGEX.findall(to_resolve):
             value = os.environ.get(variable, default_value)
-            if not value and ':' not in to_resolve:
-                raise ValueError(f'unable to resolve placeholder {variable}')
-            to_resolve = to_resolve.replace(f'${{{variable}{separator}{default_value}}}', value)
+            to_resolve = to_resolve.replace(f'${{{variable}{separator}{default_value}}}', value if value else 'None')
         return to_resolve
 
     @classmethod
@@ -222,7 +223,7 @@ class ConfigBinder:
                             return False
                 raise ValueError()
             if field_type is NoneType:
-                if ast.literal_eval(str(field_data)) is None:
+                if field_data == '' or ast.literal_eval(str(field_data)) is None:
                     return None
             return field_type(field_data)
         except (TypeError, ValueError):

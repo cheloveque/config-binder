@@ -1,0 +1,29 @@
+{
+    "field1": "example string",
+    "field2": 45.67,
+    "field3":
+    {
+        "key1":
+        {
+            "nested_field1": 123,
+            "nested_field2": "True"
+        },
+        "key2":
+        {
+            "nested_field1": "${EXISTENT_ENV}",
+            "nested_field2": "False"
+        }
+    },
+    "field4":
+    [
+        1,
+        2,
+        3,
+        4,
+        5
+    ],
+    "field5": "some string",
+    "field7": "${NONEXISTENT_ENV}",
+    "field8": "${NONEXISTENT_ENV:}",
+    "field10": "${NONEXISTENT_ENV}"
+}
