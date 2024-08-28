@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "config-binder"
-version = "0.2.1"
+version = "0.2.2"
 description = "Easily parse configurations across various formats (YAML, JSON, etc.) with recursive class binding, environment variables resolution and type safety."
 authors = ["Pavel Istomin <inspaulation@gmail.com>"]
 license = "MIT"

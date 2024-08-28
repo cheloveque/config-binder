@@ -1,3 +1,6 @@
+## [0.2.2] (2024-08-20)
+- removed Self typing due to compatibility issues
+
 ## [0.2.1] (2024-08-20)
 - json parsing issue fixed
 

@@ -4,7 +4,7 @@ import re
 from enum import Enum
 from pathlib import Path
 from types import NoneType
-from typing import Type, get_type_hints, Dict, Any, TypeVar, Literal, Union, Tuple, List, Set, Self
+from typing import Type, get_type_hints, Dict, Any, TypeVar, Literal, Union, Tuple, List, Set
 
 import yaml
 import json
@@ -27,7 +27,7 @@ class ConfigType(Enum):
     json = ['.json']
 
     @classmethod
-    def of_extension(cls, extension: str) -> Self:
+    def of_extension(cls, extension: str):
         for config_type in cls:
             if extension in config_type.value:
                 return config_type
