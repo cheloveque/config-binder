@@ -27,6 +27,11 @@ def test_load_all_types():
         field8: Optional[int]
         field9: str
         field10: str
+        field11: int = 42
+        field12: str = 'default'
+        field13: str = 'default'
+        field14: str = 'default'
+        field15: Optional[str] = 'default'
 
     os.environ["EXISTENT_ENV"] = "456"
 
@@ -52,6 +57,11 @@ def test_load_all_types():
         assert config.field8 is None
         assert config.field9 == 'None'
         assert config.field10 == 'None'
+        assert config.field11 == 42
+        assert config.field12 == 'default'
+        assert config.field13 == 'default'
+        assert config.field14 == 'default'
+        assert config.field15 is None
 
 
 def test_read():
@@ -70,6 +80,11 @@ def test_read():
         field8: Optional[int]
         field9: str
         field10: str
+        field11: int = 42
+        field12: str = 'default'
+        field13: str = 'default'
+        field14: str = 'default'
+        field15: Optional[str] = 'default'
 
     data = """
     field1: example string
@@ -91,6 +106,9 @@ def test_read():
     field7: ${NONEXISTENT_ENV}
     field8: ${NONEXISTENT_ENV:}
     field10: ${NONEXISTENT_ENV}
+    field13: ${NONEXISTENT_ENV}
+    field14: ${NONEXISTENT_ENV:}
+    field15: None
     """
 
     os.environ["EXISTENT_ENV"] = "456"
@@ -116,6 +134,11 @@ def test_read():
     assert config.field8 is None
     assert config.field9 == 'None'
     assert config.field10 == 'None'
+    assert config.field11 == 42
+    assert config.field12 == 'default'
+    assert config.field13 == 'default'
+    assert config.field14 == 'default'
+    assert config.field15 is None
 
 
 def test_bind_set_list():

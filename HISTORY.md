@@ -1,3 +1,6 @@
+## [0.3.0] (2024-09-01)
+- default values support
+
 ## [0.2.3] (2024-08-28)
 - improved usability of None properties
 - added json environment variables parsing

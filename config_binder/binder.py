@@ -1,4 +1,4 @@
-import ast
+import json
 import os
 import re
 from enum import Enum
@@ -7,13 +7,13 @@ from types import NoneType
 from typing import Type, get_type_hints, Dict, Any, TypeVar, Literal, Union, Tuple, List, Set
 
 import yaml
-import json
 from yaml import SafeLoader, ScalarNode
 
 ENV_VARIABLE_REGEX = re.compile(r'.*?\$\{([^{:}]+)(:?)([^}]+)?}.*?')
 FILE_ENCODING = 'utf-8'
 
 ERROR_MSG = 'Failed to load a configuration'
+UNDEFINED_DEFAULT = "$#%!UNDEFINED!%#$"
 
 primitive_types = [bool, int, float, NoneType, str]
 
@@ -99,7 +99,8 @@ class ConfigBinder:
     def _resolve_envs(to_resolve: str):
         for variable, separator, default_value in ENV_VARIABLE_REGEX.findall(to_resolve):
             value = os.environ.get(variable, default_value)
-            to_resolve = to_resolve.replace(f'${{{variable}{separator}{default_value}}}', value if value else 'None')
+            to_resolve = to_resolve.replace(f'${{{variable}{separator}{default_value}}}',
+                                            value if value else UNDEFINED_DEFAULT)
         return to_resolve
 
     @classmethod
@@ -108,8 +109,17 @@ class ConfigBinder:
         kw_fields = {}
 
         for field_name, field_type in type_hints.items():
+            default_field_value = cls.__get_field_default(clazz, field_name)
             try:
                 field_data = data.get(field_name)
+                if cls.__is_none(field_data) and field_name in data:
+                    field_data = None
+                    force_none = True
+                else:
+                    force_none = False
+                    if field_data == UNDEFINED_DEFAULT:
+                        field_data = None
+
                 if cls.__if_custom_class(field_type):
                     kw_fields[field_name] = cls.__bind_class(field_data, field_type)
                 elif cls.__if_collection(field_type):
@@ -124,8 +134,14 @@ class ConfigBinder:
                 elif cls.__if_union(field_type):
                     kw_fields[field_name] = cls.__bind_union(field_data, field_type)
                 else:
+                    if cls.__is_none(field_data) and default_field_value != UNDEFINED_DEFAULT and not force_none:
+                        kw_fields[field_name] = default_field_value
+                        continue
                     kw_fields[field_name] = cls.__bind_simple_type(field_data, field_type)
             except Exception as ex:
+                if default_field_value != UNDEFINED_DEFAULT:
+                    kw_fields[field_name] = default_field_value
+                    continue
                 raise ValidationError(f"Failed to bind \'{field_name}\' field: {ex.__str__()}")
 
         try:
@@ -223,8 +239,19 @@ class ConfigBinder:
                             return False
                 raise ValueError()
             if field_type is NoneType:
-                if field_data == '' or ast.literal_eval(str(field_data)) is None:
+                if cls.__is_none(field_data):
                     return None
             return field_type(field_data)
         except (TypeError, ValueError):
             raise ValidationError(f"Cannot bind value \'{field_data}\' to type \'{field_type.__name__}\'")
+
+    @staticmethod
+    def __get_field_default(clazz: Type, field_name: str):
+        try:
+            return getattr(clazz, field_name)
+        except AttributeError:
+            return UNDEFINED_DEFAULT
+
+    @staticmethod
+    def __is_none(obj):
+        return obj is None or obj == 'None'
