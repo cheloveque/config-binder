@@ -1,3 +1,6 @@
+## [0.4.0] (2024-09-24)
+- add pydantic parents support
+
 ## [0.3.0] (2024-09-01)
 - default values support
 

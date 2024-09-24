@@ -23,11 +23,11 @@ jobs:
           python-version: '3.x'
       - name: Compare versions
         run: |
-          old_version=$(git show HEAD^:pyproject.toml | grep '^version =' | cut -d '"' -f 2)
-          new_version=$(grep '^version =' pyproject.toml | cut -d '"' -f 2)
-          echo "old_version: $old_version -> new_version: $new_version"
-          echo "new_version=$new_version" >> $GITHUB_OUTPUT
-          if [ "$old_version" != "$new_version" ]; then
+          previous_version=$(git show HEAD^:pyproject.toml | grep '^version =' | cut -d '"' -f 2)
+          current_version=$(grep '^version =' pyproject.toml | cut -d '"' -f 2)
+          echo "previous_version: $previous_version -> current_version: $current_version"
+          echo "current_version=$current_version" >> $GITHUB_OUTPUT
+          if [ "$previous_version" != "$current_version" ]; then
             echo "version_changed=true" >> $GITHUB_OUTPUT
           else
             echo "version_changed=false" >> $GITHUB_OUTPUT
@@ -50,12 +50,15 @@ jobs:
     - name: Run tests
       run: poetry run pytest
     - run: poetry config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
+    - name: Verbose tag
+      run: |
+        echo "custom_tag: ${{ needs.check_if_version_changed.outputs.current_version }}"
     - name: Push tag
       id: tag_version
       uses: mathieudutour/github-tag-action@v6.2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        custom_tag: ${{ needs.check_if_version_changed.outputs.new_version }}
+        custom_tag: ${{ needs.check_if_version_changed.outputs.current_version }}
     - name: Create a GitHub release
       uses: ncipollo/release-action@v1
       with:

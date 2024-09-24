@@ -248,6 +248,10 @@ class ConfigBinder:
     @staticmethod
     def __get_field_default(clazz: Type, field_name: str):
         try:
+            if any(base.__name__ == "BaseModel" for base in clazz.__bases__):
+                field_info = getattr(clazz, "__fields__", {}).get(field_name)
+                if field_info and field_info.default is not None:
+                    return field_info.default
             return getattr(clazz, field_name)
         except AttributeError:
             return UNDEFINED_DEFAULT
