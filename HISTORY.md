@@ -1,3 +1,6 @@
+## [0.4.1] (2024-09-24)
+- pydantic undefined default value fixed
+
 ## [0.4.0] (2024-09-24)
 - add pydantic parents support
 

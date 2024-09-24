@@ -1,14 +1,15 @@
 [tool.poetry]
 name = "config-binder"
-version = "0.4.0"
+version = "0.4.1"
 description = "Easily parse configurations across various formats (YAML, JSON, etc.) with recursive class binding, environment variables resolution and type safety."
 authors = ["Pavel Istomin <inspaulation@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.8"
 pyyaml = "^6.0"
+pydantic = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"

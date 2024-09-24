@@ -250,7 +250,8 @@ class ConfigBinder:
         try:
             if any(base.__name__ == "BaseModel" for base in clazz.__bases__):
                 field_info = getattr(clazz, "__fields__", {}).get(field_name)
-                if field_info and field_info.default is not None:
+                if (field_info and field_info.default is not None
+                        and type(field_info.default).__name__ != 'PydanticUndefinedType'):
                     return field_info.default
             return getattr(clazz, field_name)
         except AttributeError:

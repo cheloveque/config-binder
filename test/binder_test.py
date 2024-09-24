@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Union, Optional, Literal, Tuple, List, Set, Dict
 
 import pytest
+from pydantic import BaseModel
 
 from config_binder import ConfigBinder, ValidationError, ConfigType
 
@@ -10,6 +11,58 @@ from config_binder import ConfigBinder, ValidationError, ConfigType
 def data_template(val):
     return {'field': val}
 
+
+def test_load_all_types_pydantic():
+    class NestedConfig(BaseModel):
+        nested_field1: int
+        nested_field2: bool
+
+    class MainConfig(BaseModel):
+        field1: str
+        field2: float
+        field3: Dict[str, NestedConfig]
+        field4: List[int]
+        field5: Union[str, int]
+        field6: Optional[int]
+        field7: Optional[int]
+        field8: Optional[int]
+        field9: str
+        field10: str
+        field11: int = 42
+        field12: str = 'default'
+        field13: str = 'default'
+        field14: str = 'default'
+        field15: Optional[str] = 'default'
+
+    os.environ["EXISTENT_ENV"] = "456"
+
+    for config_type in ConfigType:
+        config = ConfigBinder.load(f"data/test/test{config_type.value[0]}", MainConfig)
+        assert isinstance(config, MainConfig)
+        assert config.field1 == "example string"
+        assert isinstance(config.field2, float)
+        assert config.field2 == 45.67
+        assert isinstance(config.field3, dict)
+        assert 'key1' in config.field3 and isinstance(config.field3['key1'], NestedConfig)
+        assert config.field3['key1'].nested_field1 == 123
+        assert config.field3['key1'].nested_field2 is True
+        assert 'key2' in config.field3 and isinstance(config.field3['key2'], NestedConfig)
+        assert config.field3['key2'].nested_field1 == 456
+        assert config.field3['key2'].nested_field2 is False
+        assert isinstance(config.field4, list)
+        assert config.field4 == [1, 2, 3, 4, 5]
+        assert isinstance(config.field5, str)
+        assert config.field5 == "some string"
+        assert config.field6 is None
+        assert config.field7 is None
+        assert config.field8 is None
+        assert config.field9 == 'None'
+        assert config.field10 == 'None'
+        assert config.field11 == 42
+        assert config.field12 == 'default'
+        assert config.field13 == 'default'
+        assert config.field14 == 'default'
+        assert config.field15 is None
 
 def test_load_all_types():
     class NestedConfig:
